@@ -20,7 +20,7 @@ Use the hosted endpoint `https://mcp.data.gouv.fr/mcp` (recommended). If you sel
 
 The MCP server configuration depends on your client. Use the appropriate configuration format for your client:
 
-[AnythingLLM](#anythingllm) | [ChatGPT](#chatgpt) | [Claude Code](#claude-code) | [Claude Desktop](#claude-desktop) | [Cursor](#cursor) | [Gemini CLI](#gemini-cli) | [IBM Bob](#ibm-bob) | [Kiro CLI](#kiro-cli) | [Kiro IDE](#kiro-ide) | [Mistral Vibe](#mistral-vibe-cli) | [VS Code](#vs-code) | [Windsurf](#windsurf)
+[AnythingLLM](#anythingllm) | [ChatGPT](#chatgpt) | [Claude Code](#claude-code) | [Claude Desktop](#claude-desktop) | [Cursor](#cursor) | [Gemini CLI](#gemini-cli) | [HuggingChat](#huggingchat) | [Le Chat (Mistral)](#le-chat-mistral) | [IBM Bob](#ibm-bob) | [Kiro CLI](#kiro-cli) | [Kiro IDE](#kiro-ide) | [Mistral Vibe](#mistral-vibe-cli) | [VS Code](#vs-code) | [Windsurf]
 ### AnythingLLM
 
 1. Locate the `anythingllm_mcp_servers.json` file in your AnythingLLM storage plugins directory:
@@ -117,6 +117,16 @@ Add the following to your `~/.gemini/settings.json` file:
 2. **Add Server:** Click the + `Add Server` button in the server management window.
 3. **Configure the Server:** Enter a **Server Name** (e.g., "Data Gouv") and set the **Server URL** to `https://mcp.data.gouv.fr/mcp`. Click `Add Server` to save.
 4. **Verify Connection:** Click the `Health Check` button on the new server card to confirm it displays as **Connected**. Ensure the toggle is activated to use the tools in your chat.
+
+### Le Chat (Mistral)
+
+*Available on all plans, including free.*
+
+1. **Go to Connectors**: Open Mistral in your browser, then go to `Intelligence` > `Connectors`.
+2. **Add a custom connector**: Click `Add connector` > `Custom MCP Connector`, give it a name (for example `DataGouv`), and set the server URL to `https://mcp.data.gouv.fr/mcp`.
+3. **No authentication**: Leave authentication disabled.
+4. **Create**: Click **Create**.
+
 
 ### Mistral Vibe CLI
 
@@ -240,7 +250,7 @@ Docker is required for the recommended setup. Install it via [Docker Desktop](ht
 docker compose up -d
 
 # With custom environment variables
-MCP_PORT=8007 DATAGOUV_ENV=demo docker compose up -d
+MCP_PORT=8007 DATAGOUV_API_ENV=demo docker compose up -d
 
 # Stop
 docker compose down
@@ -249,7 +259,10 @@ docker compose down
 **Environment variables:**
 - `MCP_HOST`: host to bind to (defaults to `0.0.0.0`). Set to `127.0.0.1` for local development to follow MCP security best practices.
 - `MCP_PORT`: port for the MCP HTTP server (defaults to `8000` when unset).
-- `DATAGOUV_ENV`: `prod` (default) or `demo`. This controls which data.gouv.fr environement it uses the data from (https://www.data.gouv.fr or https://demo.data.gouv.fr). By default the MCP server talks to the production data.gouv.fr. Set `DATAGOUV_ENV=demo` if you specifically need the demo environment.
+- `MCP_ENV`: environment name reported to Sentry (defaults to `local` when unset). Set explicitly to `prod`, `preprod`, or `demo` in your deployment.
+- `DATAGOUV_API_ENV`: `prod` (default) or `demo`. This controls which data.gouv.fr environement it uses the data from (https://www.data.gouv.fr or https://demo.data.gouv.fr). By default the MCP server talks to the production data.gouv.fr. Set `DATAGOUV_API_ENV=demo` if you specifically need the demo environment.
+- `SENTRY_DSN`: Sentry DSN to enable error and performance monitoring. Monitoring is disabled when unset.
+- `SENTRY_SAMPLE_RATE`: sampling rate for Sentry traces and profiles (float `0.0`–`1.0`, defaults to `1.0`).
 
 #### ⚙️ Manual Installation
 
@@ -271,7 +284,8 @@ You will need [uv](https://github.com/astral-sh/uv) to install dependencies and 
   ```
   MCP_HOST=127.0.0.1  # (defaults to 0.0.0.0, use 127.0.0.1 for local dev)
   MCP_PORT=8007  # (defaults to 8000 when unset)
-  DATAGOUV_ENV=prod  # Allowed values: demo | prod (defaults to prod when unset)
+  MCP_ENV=local  # environment name sent to Sentry (defaults to local when unset)
+  DATAGOUV_API_ENV=prod  # Allowed values: demo | prod (defaults to prod when unset)
   ```
 
   Load the variables with your preferred method, e.g.:
@@ -358,7 +372,7 @@ The MCP server provides tools to interact with data.gouv.fr datasets and dataser
 
   Parameters: `dataset_id` (optional), `resource_id` (optional), `limit` (optional, default: 12, max: 100)
 
-  Returns monthly statistics including visits and downloads, sorted by month in descending order (most recent first). At least one of `dataset_id` or `resource_id` must be provided. **Note:** This tool only works with the production environment (`DATAGOUV_ENV=prod`). The Metrics API does not have a demo/preprod environment.
+  Returns monthly statistics including visits and downloads, sorted by month in descending order (most recent first). At least one of `dataset_id` or `resource_id` must be provided. **Note:** This tool only works with the production environment (`DATAGOUV_API_ENV=prod`). The Metrics API does not have a demo/preprod environment.
 
 ## 🧪 Tests
 
@@ -380,7 +394,7 @@ uv run pytest tests/test_tabular_api.py
 RESOURCE_ID=3b6b2281-b9d9-4959-ae9d-c2c166dff118 uv run pytest tests/test_tabular_api.py
 
 # Run with prod environment
-DATAGOUV_ENV=prod uv run pytest
+DATAGOUV_API_ENV=prod uv run pytest
 ```
 
 ### 🔍 Interactive Testing with MCP Inspector
